@@ -3,24 +3,38 @@ from binascii import a2b_qp
 from typing import Union
 from typing import Tuple
 
-# Python libraries
-import numpy as np
+# data manipulation
 import pandas as pd
+import numpy as np
+
+# data visualization
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.model_selection import train_test_split
-import os
 
-# Personal libraries
+# data separation/transformation
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+
+# system manipulation
+import os
+import sys
+sys.path.append("./util_")
 import acquire_
+
+# other
 import env
+import warnings
+warnings.filterwarnings("ignore")
+
+#############################################################################################
 
 # set a default them for all my visuals
 sns.set_theme(style="whitegrid")
 
-def wrangle_zillow() -> pd.DataFrame:
+def wrangle_zillow() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    return the prepared 2017 single family data
+    return the prepared 2017 single family clearn data in 5 different dta frames:
+        train, validate, test all come from zillow_encoded_scaled and zillow is the original data with no scaling.
     """
     # sql query
     query = """
@@ -38,7 +52,7 @@ def wrangle_zillow() -> pd.DataFrame:
     # get existing csv data from the util directory
     zillow = acquire_.get_existing_csv_file_(fileName ="zillow_single_family")
 
-    # rename dataframe columns
+   # rename dataframe columns
     zillow = zillow.rename(columns={"bedroomcnt":"bedrooms",
                         "bathroomcnt":"bathrooms",
                         "calculatedfinishedsquarefeet":"sqr_feet",
@@ -65,9 +79,89 @@ def wrangle_zillow() -> pd.DataFrame:
     zillow = zillow[zillow.tax_amount <= 20000]
 
     # Rename the unique values in fips to county names
-    zillow.county = zillow.county.astype(str).str.replace("6037.0","Los Angeles", regex=False).str.replace("6059.0","Orange", regex=False).str.replace("6111.0","Sam Juan", regex=False)
+    zillow.county = zillow.county.astype(str).str.replace("6037.0","Los Angeles").str.replace("6059.0","Orange").str.replace("6111.0","Sam Juan")
+
+    # create dummie variables
+    dummies = pd.get_dummies(zillow.county)
+
+    # clean dummie column names
+    dummies_col = dummies.columns.str.replace(" ", "_").str.lower()
+
+    # make a copy of my original data frame
+    zillow_encoded_scaled = zillow.copy()
+
+    # add dummies to my data frame
+    zillow_encoded_scaled[dummies_col] = dummies
+
+    # split the data into training, validation and testing sets
+    train, validate, test = split_data_(df=zillow_encoded_scaled,
+                        test_size=0.2, 
+                        validate_size=0.2,
+                        stratify_col= "county",
+                        random_state=95)
     
-    return zillow
+    # scalable features
+    features_to_scale = train[['bedrooms','bathrooms','sqr_feet','year_built','tax_amount']]
+
+    # build a scaling object
+    scaler = MinMaxScaler()
+
+    # Note that we only call .fit with the training data,
+    # but we use .transform to apply the scaling to all the data splits.
+    # y Target values: this is not being changed in any way(no predictions are being made)
+    x_train_scaled = scaler.fit_transform(X=features_to_scale,)
+
+    # transfrom the validate and test using the minMax object
+    x_val_scaled = scaler.transform(X=validate[features_to_scale.columns])
+    x_test_scaled = scaler.transform(X=test[features_to_scale.columns])
+
+
+    # New _ariable mames to add to data
+    new_scale_col = []
+    for i in features_to_scale.columns:
+        new_scale_col.append(f"{i}_scaled")
+
+    # convert to dataframe
+    x_train_scaled = pd.DataFrame(x_train_scaled)
+    x_val_scaled = pd.DataFrame(x_val_scaled)
+    x_test_scaled = pd.DataFrame(x_test_scaled)
+
+    # add new column names back to the data frame
+    x_train_scaled[new_scale_col] = x_train_scaled
+    x_val_scaled[new_scale_col] = x_val_scaled
+    x_test_scaled[new_scale_col] = x_test_scaled
+
+    # remove redundent columns from new dataframe
+    x_train_scaled = x_train_scaled[new_scale_col]
+    x_val_scaled = x_val_scaled[new_scale_col]
+    x_test_scaled = x_test_scaled[new_scale_col]
+
+    # train[x_train_scaled.columns] = x_train_scaled
+    train = train.reset_index(drop=True)
+    validate = validate.reset_index(drop=True)
+    test = test.reset_index(drop=True)
+
+    # Concatenate the DataFrames horizontally
+    train = pd.concat([train, x_train_scaled], axis=1, verify_integrity=True)
+    validate = pd.concat([validate, x_val_scaled], axis=1, verify_integrity=True)
+    test = pd.concat([test, x_test_scaled], axis=1, verify_integrity=True)
+
+    # drop the original columns
+    train = train.drop(columns=features_to_scale)
+    validate = validate.drop(columns=features_to_scale)
+    test = test.drop(columns=features_to_scale)
+
+    # save created data frames into csv
+    save_split_data_(original_df=zillow,
+                            encoded_scaled_df=zillow_encoded_scaled, 
+                            train=train, 
+                            validate=validate, 
+                            test=test,
+                            test_size=0.2,
+                            stratify_col= "county",
+                            random_state=95)
+
+    return zillow, zillow_encoded_scaled, train, validate, test
 
 
 #---------------------------------------------------------------
