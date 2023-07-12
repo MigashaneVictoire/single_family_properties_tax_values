@@ -79,7 +79,7 @@ def wrangle_zillow() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataF
     zillow = zillow[zillow.tax_amount <= 20000]
 
     # Rename the unique values in fips to county names
-    zillow.county = zillow.county.astype(str).str.replace("6037.0","Los Angeles").str.replace("6059.0","Orange").str.replace("6111.0","Sam Juan")
+    zillow.county = zillow.county.astype(str).str.replace("6037.0","Los Angeles").str.replace("6059.0","Orange").str.replace("6111.0","Ventura")
 
     # create dummie variables
     dummies = pd.get_dummies(zillow.county)
