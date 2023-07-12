@@ -57,6 +57,7 @@ def get_codeup_sql_data_(db_name: str, table_name: str = None, query: str= None,
         data: panads data frame fromt sql query
         query: the query used to retreive the data
     """
+    project_data = "./00_project_data"
     if table_name: # if table is given
         query=f"""
             SELECT *
@@ -71,10 +72,16 @@ def get_codeup_sql_data_(db_name: str, table_name: str = None, query: str= None,
     elif query:
         # access the database and retreive the data
         data = pd.read_sql(query, env.get_db_access(db_name))
-    
-        # Write that dataframe to disk for later. Called "caching" the data for later.
-        data.to_csv(f"{fileName}.csv", mode= "w")
 
+        if not os.path.exists(project_data):
+            os.makedirs(project_data)
+
+            # Write that dataframe to disk for later. Called "caching" the data for later.
+            data.to_csv(f"{project_data}/{fileName}.csv", mode= "w")
+        else:
+            # Write that dataframe to disk for later. Called "caching" the data for later.
+            data.to_csv(f"{project_data}/{fileName}.csv", mode= "w")
+            
     return data, query # return both the data and the query
 
 ################### GET EXISTING FILE ##############################################
