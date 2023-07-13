@@ -103,7 +103,7 @@ A. Github repo with:
 
 ### With more time:
 
-- 
+- Collect better data on current home conditions.
 
 ***
 
