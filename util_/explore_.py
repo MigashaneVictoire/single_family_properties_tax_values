@@ -69,3 +69,15 @@ def save_visuals(fig: plt.figure ,viz_name:str= "unamed_viz", folder_name:int= 0
             fig.canvas.print_figure(file_path)
     
     return f"Visual successfully saved in folder: {folder_name}"
+
+#---------------------------------------------------------------
+# Used to verify p value for a corelations test
+def verify_alpha_(p_value, alpha=0.05) -> None:
+    """
+    Goal: Test if we are acepting or rejecting the null
+    """
+    # oompare p-value to alpha
+    if p_value < alpha:
+        print("We have enough evidence to reject the null")
+    else:
+        print("we fail to reject the null at this time")
