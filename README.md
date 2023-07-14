@@ -252,7 +252,7 @@ Polynomial feature regressor (Power 3)
 
 ## Testing the Model
 
-- Cubic Regression
+- Generalized Linear Model (GLM)
 
 ***
 

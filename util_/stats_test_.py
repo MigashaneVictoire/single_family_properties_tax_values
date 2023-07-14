@@ -122,14 +122,14 @@ def mean_tax_value_vs_bed_bath_rooms():
     fig, ax = plt.subplots(1, 2, figsize=(8, 4))
 
     # Bar plot for mean tax value
-    grouped_bathrooms_by_mean_tax_value.plot(kind='bar', ax=ax[0], color=['steelblue'] * (len(grouped_bathrooms_by_mean_tax_value.unique()) - 6) + ['red']) 
+    grouped_bathrooms_by_mean_tax_value.plot(kind='bar', ax=ax[0], color=['steelblue'] * (len(grouped_bathrooms_by_mean_tax_value.unique()) - 3) + ['red', 'red','red']) 
     ax[0].set_title('Mean Tax Value by Bathrooms')
     ax[0].set_xlabel('Bathrooms')
     ax[0].set_ylabel('Mean Tax Value')
     ax[0].set_xticklabels(ax[0].get_xticklabels(), rotation=0)
 
     # Bar plot for total bedroom count
-    grouped_bathrooms_by_total_bedroom_count.plot(kind='bar', ax=ax[1], color=['steelblue'] * (len(grouped_bathrooms_by_total_bedroom_count) - 6) + ['red']) 
+    grouped_bathrooms_by_total_bedroom_count.plot(kind='bar', ax=ax[1], color=['steelblue'] * (len(grouped_bathrooms_by_total_bedroom_count) - 3) + ['red', 'red','red']) 
     ax[1].set_title('Total Bedroom Count')
     ax[1].set_xlabel('Bathrooms')
     ax[1].set_ylabel('Total Bedroom Count')
@@ -143,6 +143,10 @@ def mean_tax_value_vs_county():
     Return: visual to answer the following question
         Does the mean tax value differ significantly between properties in Los Angeles County compared to the other counties?
     """
+    print("Null_Hyp: The mean tax value differ significantly between properties in Los Angeles County compared to the other counties?")
+    print("")
+    print("Alt_Hyp: The mean tax value does not differ significantly between properties in Los Angeles County compared to the other counties?")
+
 
     # Create a new column with binned values
     train['county_bin'] = train['county'].replace(['Ventura', 'Orange'], 'Other')
